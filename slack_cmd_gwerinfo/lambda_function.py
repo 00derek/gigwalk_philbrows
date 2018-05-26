@@ -31,7 +31,17 @@ def _get_certs(cur, email):
 
 def _get_tickets(cur, customer_id):
     tickets = []
-    sql_stmt = "select os.title, t.id, t.status, case when t.assigned_customer_id={} then 'Yes' else 'No' end as ASSIGNED_TO_ME, t.approval_status, dm.status, os.organization_id from tickets t, organization_subscriptions os, doubleoptin_map dm where t.id = dm.ticket_id and os.id = t.organization_subscription_id and dm.customer_id = {}".format(customer_id, customer_id)
+    # one line sql for testing
+    # select os.title, t.id, t.status, case when t.assigned_customer_id=1419753 then 'Yes' else 'No' end as ASSIGNED_TO_ME, t.approval_status, dm.status, os.organization_id, p.status, p.amount, p.date_paid, txn.paypal_trx_id, txn.receiver_email, txn.status from tickets t join organization_subscriptions os on os.id = t.organization_subscription_id join doubleoptin_map dm on t.id = dm.ticket_id left outer join payouts p on p.ticket_id = t.id and p.customer_id = dm.customer_id left outer join payout_transactions txn on p.transaction_id = txn.id where dm.customer_id = 1419753
+    sql_stmt = "select os.title, t.id, t.status, " \
+               "case when t.assigned_customer_id={} then 'Yes' else 'No' end as ASSIGNED_TO_ME, "\
+               "t.approval_status, dm.status, os.organization_id, p.status, p.amount, p.date_paid,"\
+               " txn.paypal_trx_id, txn.receiver_email, txn.status "\
+               "from tickets t join organization_subscriptions os on os.id = t.organization_subscription_id "\
+               "join doubleoptin_map dm on t.id = dm.ticket_id "\
+               "left outer join payouts p on p.ticket_id = t.id and p.customer_id = dm.customer_id "\
+               "left outer join payout_transactions txn on p.transaction_id = txn.id "\
+               "where dm.customer_id = {}".format(customer_id, customer_id) 
     cur.execute(sql_stmt)
     if cur.rowcount == 0:
         return []
@@ -78,31 +88,62 @@ def lambda_handler(event, context):
         }
         attachments = [cert_json]
         
-        for ticket in tickets:
+        # os.title, t.id, t.status, case when t.assigned_customer_id=1419753 then 'Yes' else 'No' end as ASSIGNED_TO_ME, t.approval_status, dm.status, os.organization_id, p.status, p.amount, p.date_paid, txn.paypal_trx_id, txn.receiver_email, txn.status
+        for project_title, ticket_id, ticket_status, assigned_to_me, ticket_approval_status, application_status, org_id, payout_status, payout_amount, payout_paid_date, paypal_txn_id, paypal_receiver_email, txn_status in tickets:
             attachments.append({
               "fallback": "Required plain-text summary of the attachment.",
               "color": "#3B5998",
-              "pretext": ticket[0],
-              "title": "https://next.gigwalk.com/tickets/{}/detail/{}".format(ticket[6], ticket[1]),
+              "pretext": project_title,
+              "title": "https://next.gigwalk.com/tickets/{}/detail/{}".format(org_id, ticket_id),
               "fields": [
                 {
                   "title": "Ticket Status",
-                  "value": ticket[2],
+                  "value": ticket_status,
                   "short": True
                 },
                 {
                   "title": "ASSIGNED_TO_ME",
-                  "value": ticket[3],
+                  "value": assigned_to_me,
                   "short": True
                 },
                 {
                   "title": "Ticket Approval Status",
-                  "value": ticket[4],
+                  "value": ticket_approval_status,
                   "short": True
                 },
                 {
                   "title": "My Application Status",
-                  "value": ticket[5],
+                  "value": application_status,
+                  "short": True
+                },
+                {
+                  "title": "Payout Status",
+                  "value": payout_status,
+                  "short": True
+                },
+                {
+                  "title": "Paypal receiver_email",
+                  "value": paypal_receiver_email,
+                  "short": True
+                },
+                {
+                  "title": "Payout Amount",
+                  "value": "${}".format(payout_amount),
+                  "short": True
+                },
+                {
+                  "title": "Paid Date",
+                  "value": payout_paid_date.strftime('%m/%d/%Y %H:%M:%S'),
+                  "short": True
+                },
+                {
+                  "title": "Paypal TXN ID",
+                  "value": paypal_txn_id,
+                  "short": True
+                },
+                {
+                  "title": "Paypal TXN Status",
+                  "value": txn_status,
                   "short": True
                 }
               ]
