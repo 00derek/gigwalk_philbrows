@@ -128,12 +128,12 @@ def lambda_handler(event, context):
                 },
                 {
                   "title": "Payout Amount",
-                  "value": "${}".format(payout_amount),
+                  "value": "${}".format(payout_amount) if payout_amount else None,
                   "short": True
                 },
                 {
                   "title": "Paid Date",
-                  "value": payout_paid_date.strftime('%m/%d/%Y %H:%M:%S'),
+                  "value": payout_paid_date.strftime('%m/%d/%Y %H:%M:%S') if payout_paid_date else None,
                   "short": True
                 },
                 {
