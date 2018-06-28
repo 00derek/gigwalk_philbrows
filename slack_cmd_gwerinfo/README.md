@@ -30,7 +30,8 @@ this is simply an API endpoint to proxy the request to the AWS lambda function f
 - then under API resources, you could `deploy the API` to the stage `slackbot` you just defined
 - Go back to `POST -method execution`, since slack only using `application/x-www-form-urlencoded`, not `application/json` for the request body, we have to edit `POST - Integration Request` and add `Body Mapping Templates` as `application/x-www-form-urlencoded` and template as:
    
-   ```
+
+```
    ## convert HTML FORM POST data to JSON for insertion directly into a Lambda function
  
 ## get the raw post data from the AWS built-in variable and give it a nicer name
@@ -72,7 +73,8 @@ this is simply an API endpoint to proxy the request to the AWS lambda function f
  "$util.urlDecode($kvTokenised[0])" : #if(!$kvPair.endsWith("="))"$util.escapeJavaScript($util.urlDecode($kvTokenised[1]))"#{else}""#end#if( $foreach.hasNext ),#end
 #end
 }
-   ```
+```
+
 ### AWS lambda function
 Implement the logic in `lambda_handler.handler` here, it could be running queries against DB, it could be executing a few BE APIs to complete a task, and etc. And it could be implemented with node.js or python or other languages, so most of the team members could do it effortlessly.
  - For this slack command, I simply query the Postgres and populate the response formatted with [Slack message formats](https://api.slack.com/docs/formatting/)
