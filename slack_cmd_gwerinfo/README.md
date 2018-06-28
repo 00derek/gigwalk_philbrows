@@ -1,6 +1,8 @@
 
 ## Usage: 
-on slack, type `/whois email_address` to get a Gigwalker's info.
+- on slack, type `/command email_address` to get a Gigwalker's info.
+- `/allpublic` to get all active projects
+- `/worker ticket_id` to get assigned customer info
 
 ## Technical details
 Now it's built with legacy customer integrations of slash command,
@@ -29,20 +31,47 @@ this is simply an API endpoint to proxy the request to the AWS lambda function f
 - Go back to `POST -method execution`, since slack only using `application/x-www-form-urlencoded`, not `application/json` for the request body, we have to edit `POST - Integration Request` and add `Body Mapping Templates` as `application/x-www-form-urlencoded` and template as:
    
    ```
-       ## convert HTTP POST data to JSON for insertion directly into a Lambda function
-     
-    ## first we we set up our variable that holds the tokenised key value pairs
-    #set($httpPost = $input.path('$').split("&"))
-     
-    ## next we set up our loop inside the output structure
-    {
-    #foreach( $kvPair in $httpPost )
-     ## now we tokenize each key/value pair using "="
-     #set($kvTokenised = $kvPair.split("="))
-     ## finally we output the JSON for this pair and add a "," if this isn't the last pair
-     "$kvTokenised[0]" : "$kvTokenised[1]"#if( $foreach.hasNext ),#end
-    #end
-    }
+   ## convert HTML FORM POST data to JSON for insertion directly into a Lambda function
+ 
+## get the raw post data from the AWS built-in variable and give it a nicer name
+#set($rawPostData = $input.path('$'))
+ 
+## first we get the number of "&" in the string, this tells us if there is more than one key value pair
+#set($countAmpersands = $rawPostData.length() - $rawPostData.replace("&", "").length())
+ 
+## if there are no "&" at all then we have only one key value pair.
+## we append an ampersand to the string so that we can tokenise it the same way as multiple kv pairs.
+## the "empty" kv pair to the right of the ampersand will be ignored anyway.
+#if ($countAmpersands == 0)
+ #set($rawPostData = $rawPostData + "&")
+#end
+ 
+## now we tokenise using the ampersand(s)
+#set($tokenisedAmpersand = $rawPostData.split("&"))
+ 
+## we set up a variable to hold the valid key value pairs
+#set($tokenisedEquals = [])
+ 
+## now we set up a loop to find the valid key value pairs, which must contain only one "="
+#foreach( $kvPair in $tokenisedAmpersand )
+ #set($countEquals = $kvPair.length() - $kvPair.replace("=", "").length())
+ #if ($countEquals == 1)
+  #set($kvTokenised = $kvPair.split("="))
+  #if ($kvTokenised[0].length() > 0)
+   ## we found a valid key value pair. add it to the list.
+   #set($devNull = $tokenisedEquals.add($kvPair))
+  #end
+ #end
+#end
+ 
+## next we set up our loop inside the output structure "{" and "}"
+{
+#foreach( $kvPair in $tokenisedEquals )
+  ## finally we output the JSON for this pair and append a comma if this isn't the last pair
+  #set($kvTokenised = $kvPair.split("="))
+ "$util.urlDecode($kvTokenised[0])" : #if(!$kvPair.endsWith("="))"$util.escapeJavaScript($util.urlDecode($kvTokenised[1]))"#{else}""#end#if( $foreach.hasNext ),#end
+#end
+}
    ```
 ### AWS lambda function
 Implement the logic in `lambda_handler.handler` here, it could be running queries against DB, it could be executing a few BE APIs to complete a task, and etc. And it could be implemented with node.js or python or other languages, so most of the team members could do it effortlessly.
