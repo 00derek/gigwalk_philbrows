@@ -53,7 +53,12 @@ def lambda_handler(event, context):
         return {"text": str(e)}
     finally:
         print('Check complete at {}'.format(str(datetime.now())))
-    return "Comments have been added to these ticket ids: {}".format(tids)
+    resp_text = "Comments have been added to these ticket ids: {}".format(tids)
+    hook_url = event.get('response_url')
+    headers = {'user-agent': 'aws_lambda', 'Content-Type': 'application/json;charset=UTF-8'}
+    payload = {'text': resp_text}
+    myResponse = requests.post(hook_url, headers=headers, json=payload)
+
 
 def _get_project_ticket_ids_with_validation(pid, email):
     # validate provided email is the project creator email 
