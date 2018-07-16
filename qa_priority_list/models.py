@@ -35,7 +35,7 @@ class Projects(Model):
 
 class Tickets(Model):
 
-    def get_tickets_by_project_id(self, project_id):
+    def get_tickets_by_project_id(self, project_ids):
         query = """
         SELECT
         Customer.email,
@@ -72,8 +72,10 @@ class Tickets(Model):
         LEFT JOIN payouts as Payout on Payout.ticket_id = Ticket.id
         LEFT JOIN customers as Customer on Customer.id = Project.created_customer_id
         LEFT JOIN customers as Worker on Worker.id = Ticket.assigned_customer_id
-        WHERE Ticket.status = 'SUBMITTED' and Project.id = {}
-        ORDER BY QA_deadline_date, Ticket_submitted_date LIMIT {};
+        WHERE Ticket.status = 'SUBMITTED' and Ticket.approval_status != 'APPROVED' and Project.id in ({})
+        ORDER BY QA_deadline_date, Ticket_submitted_date 
+        LIMIT {};
         """
-        query = query.format(project_id, LIMIT)
+        project_ids_string = [str(_id) for _id in project_ids]
+        query = query.format(",".join(project_ids_string), LIMIT)
         return self._execute_query(query)

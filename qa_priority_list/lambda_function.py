@@ -6,11 +6,7 @@ FILE_KEY = os.environ['FILE_KEY']
 
 
 def priority_list(projects):
-    tickets = []
-    for project in projects:
-        _tickets = Tickets().get_tickets_by_project_id(project[0])
-        if _tickets:
-            tickets += _tickets
+    tickets = Tickets().get_tickets_by_project_id([project[0] for project in projects])
     if tickets:
         gdocs.generate_file(tickets)
 
