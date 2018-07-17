@@ -6,9 +6,10 @@
 import os
 import urllib
 import psycopg2
+import requests
 
-GW_API_HOST = os.environ['GW_API_HOST']  # URL of the site to check
-GW_AUTH_TOKEN = os.environ['GW_AUTH_TOKEN']
+GW_API_HOST = os.environ.get('GW_API_HOST')  # URL of the site to check
+GW_AUTH_TOKEN = os.environ.get('GW_AUTH_TOKEN')
 AUTHORIZED_USERS = os.environ.get('AUTHORIZED_USERS').split(',')
 EXPECTED = os.environ['expected']  # String expected to be on the page (token from Slack)
 DB_HOST = os.environ.get('DB_HOST')
@@ -54,7 +55,7 @@ def lambda_handler(event, context):
         except Exception as e:
             return "DB Glitch? {}".format(e)
 
-        sql_stmt = "SELECT c.email from customers c, organization_subscriptions os where c.id = os.created_customer_id and os.id = {}".format(pid)
+        sql_stmt = "SELECT c.email, os.organization_id from customers c, organization_subscriptions os where c.id = os.created_customer_id and os.id = {}".format(pid)
         cur.execute(sql_stmt)
         if cur.rowcount == 0:
             return "Invalid project id?"
@@ -62,12 +63,17 @@ def lambda_handler(event, context):
         if row[0].lower() != email:
             return "project creator validation failed"
 
-        sql_stmt = "UPDATE organization_subscriptions SET near_ticket_distance = {} where id = {}".format(geofence, pid)
-        cur.execute(sql_stmt)
-        conn.commit()
+        org_id = row[1]
+        url = "https://{}/v1/organizations/{}/subscriptions/{}".format(GW_API_HOST, org_id, pid)
+        headers = {'user-agent': 'aws_lambda', 'Authorization': 'Token {}'.format(GW_AUTH_TOKEN), 'Content-Type': 'application/json;charset=UTF-8'}
+        payload = {"near_ticket_distance": geofence}
+        resp = requests.put(url, headers=headers, json=payload)
 
-        if cur.rowcount == 1:
+        if resp.status_code == 200:
             return "Project {} now has a geofence(near_ticket_distance) of {}".format(pid, geofence)
         return "Could not set geofence for project {}".format(pid)
     except Exception as e:
         return e
+    finally:
+        cur.close()
+        conn.close()
