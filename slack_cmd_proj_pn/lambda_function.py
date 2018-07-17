@@ -65,18 +65,27 @@ def _get_project_ticket_ids_with_validation(pid, email):
     # and return a list of assigned/scheduled/started ticekt ids
     # one line sql for testing
     # SELECT c.email, t.id from organization_subscriptions os, customers c, tickets t where os.id = t.organization_subscription_id and c.id = os.created_customer_id and t.status in ('STARTED', 'ASSIGNED', 'SCHEDULED') and os.id = 12061015
-    conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PWD)
-    cur = conn.cursor()
-    sql_stmt = "SELECT c.email, t.id from organization_subscriptions os, customers c, tickets t where os.id = t.organization_subscription_id and c.id = os.created_customer_id and t.status in ('STARTED', 'ASSIGNED', 'SCHEDULED') and os.id = {}".format(pid) 
-    cur.execute(sql_stmt)
     tickets = []
-    if cur.rowcount == 0:
-        return tickets
-    row = cur.fetchone()
-    if row[0] != email:
-        raise ValueError("project creator validation failed")
-    while row is not None:
-        if row[1]:
-            tickets.append(row[1])
+    try:
+        conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PWD)
+        cur = conn.cursor()
+        sql_stmt = "SELECT c.email, t.id from organization_subscriptions os, customers c, tickets t where os.id = t.organization_subscription_id and c.id = os.created_customer_id and t.status in ('STARTED', 'ASSIGNED', 'SCHEDULED') and os.id = {}".format(pid) 
+        print(sql_stmt)
+        cur.execute(sql_stmt)
+        
+        print(cur.rowcount)
+        if cur.rowcount == 0:
+            return tickets
+        
         row = cur.fetchone()
+        if row[0] != email:
+            raise ValueError("project creator validation failed")
+        while row is not None:
+            if row[1]:
+                tickets.append(row[1])
+            row = cur.fetchone()
+    except Exception as e:
+        raise e
+    finally:
+        conn.close()
     return tickets
