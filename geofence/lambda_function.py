@@ -27,9 +27,13 @@ def lambda_handler(event, context):
              --data-binary "user_id=U09TV2DT2&channel_id=D19NDPDQR&text=4153393+1.0+krystle+gwteam@gigwalk.com&team_id=T0298UZFT&token=S66dc1AlO506mDqP1mQTroT4&team_domain=gigwalk&user_name=rv"
     '''
     try:
+        # AWS parses AUTHORIZED_USERS setting of 'a, b' as two user names 'a' and ' b'
+        # Note the blank in the second user name.
+        user_name = event.get('user_name')
+        user_name = user_name.strip() if user_name else user_name
         auth = (EXPECTED == event.get('token') and
                 event.get('team_domain') == 'gigwalk' and
-                event.get('user_name') in AUTHORIZED_USERS)
+                user_name in AUTHORIZED_USERS)
         if not auth:
             return "Validation of token, team_domain, user_name failed"
         if not event or not event.get('text'):
@@ -64,7 +68,6 @@ def lambda_handler(event, context):
 
         if cur.rowcount == 1:
             return "Project {} now has a geofence(near_ticket_distance) of {}".format(pid, geofence)
-        else:
-            "Could not set geofence for project {}".format(pid)
+        return "Could not set geofence for project {}".format(pid)
     except Exception as e:
         return e
