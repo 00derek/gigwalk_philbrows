@@ -1,0 +1,17 @@
+## Summary: 
+This is not really an open API for the end user but for 2.0 app showing banner message dynamically prior to 2.0 apprecation to promote 3.0 app.
+
+## Technical details
+this is simply an API endpoint to proxy the request to the AWS lambda function for executing the tasks
+
+- Please review other slack bot directories to get how to set up an AWS API gateway endpoint and a Lambda function
+- Usual PROD DB info setup in lambda to connect to get available unassigned gigs, please note that the info may be outdated because the view is only updated daily
+
+
+### AWS API Gateway & Lambda function proxy
+It is using GET endpoint and proxy the request directly to AWS lambda function
+
+- So please note that we would get the input from API gateway directly, [refer to the documentation here for the input format]
+(https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format)
+
+- And also the [output format to API gateway](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format), which we need to populate the output format conforming to the API gateway spec, otherwise it will get 502 error or ISE 500 error.  If it needs to provide other status code, it needs to be done within lambda as well.
