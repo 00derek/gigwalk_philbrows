@@ -1,0 +1,18 @@
+http://gigwalk.myjetbrains.com/youtrack/issue/<issue>
+
+### Summary:
+ -
+
+### List of Changes:
+ -
+ -
+ -
+
+### Testing:
+ -
+
+### Checks:
+ * [x] Slack commands in youtrack
+ * [x] How are we ensuring that only the right people can execute this slack command/script?
+ * [x] Provided link to PR in youtrack ticket
+ * [x] Think about whether you are reading from the db or writing. If writing, how are you idiot-proofing this tool?
