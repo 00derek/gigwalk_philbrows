@@ -23,7 +23,7 @@ class Command(object):
 class WorkerCommand(Command):
     def __init__(self, obj):
         Command.__init__(self, obj)
-        self.query = "SELECT c.last_name, c.first_name, c.email, c.id, cert.title FROM customers c JOIN tickets t ON t.assigned_customer_id = c.id LEFT OUTER JOIN customer_cert_associations cca ON cca.customer_id = c.id JOIN certifications cert ON cert.id = cca.certification_id WHERE t.id = {}"
+        self.query = "SELECT c.last_name, c.first_name, c.email, c.id, cert.title FROM customers c JOIN tickets t ON t.assigned_customer_id = c.id LEFT OUTER JOIN customer_cert_associations cca ON cca.customer_id = c.id LEFT OUTER JOIN certifications cert ON cert.id = cca.certification_id WHERE t.id = {}"
 
     def render_response(self):
         """
@@ -31,7 +31,7 @@ class WorkerCommand(Command):
         """
         attachments = []
         last_name, first_name, email, customer_id, _ = self.results[0]
-        certs = [cert for (_, _, _, _, cert) in self.results]
+        certs = [cert for (_, _, _, _, cert) in self.results if cert is not None]
         attachments.append({
                 "fallback": "fallback text",
                 "fields": [
@@ -52,7 +52,7 @@ class WorkerCommand(Command):
                     },
                     {
                       "title": "Certification",
-                      "value": ', '.join(certs),
+                      "value": ', '.join(certs) if certs else None,
                       "short": True
                     }]
             })
