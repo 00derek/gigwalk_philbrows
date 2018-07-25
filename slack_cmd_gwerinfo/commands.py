@@ -95,7 +95,7 @@ class AppliedCommand(Command):
     """
     def __init__(self, obj):
         Command.__init__(self, obj)
-        self.query = "SELECT os.title, c.email, os.organization_id, t.id, dm.date_created, dm.status FROM tickets t JOIN organization_subscriptions os ON os.id = t.organization_subscription_id LEFT OUTER JOIN customers c ON c.id = os.created_customer_id LEFT OUTER JOIN doubleoptin_map dm ON dm.ticket_id = t.id WHERE dm.date_created > Now() - interval '30 days'AND t.assigned_customer_id = {}"
+        self.query = "SELECT os.title, c.email, os.organization_id, t.id, dm.date_created, dm.status FROM tickets t JOIN organization_subscriptions os ON os.id = t.organization_subscription_id LEFT OUTER JOIN customers c ON c.id = os.created_customer_id LEFT OUTER JOIN doubleoptin_map dm ON dm.ticket_id = t.id WHERE dm.date_created > Now() - interval '30 days' AND dm.customer_id = {}"
 
     def render_response(self):
         """
