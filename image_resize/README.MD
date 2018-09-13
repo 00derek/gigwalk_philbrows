@@ -13,6 +13,9 @@ it will need to look for thumbnails at
 
 - e.g. http://gigwalk-thumbnails.s3-website-us-east-1.amazonaws.com/multitenant/public_uploads/84adcb97964ad3778b6b159145de23ff4645a0a7b699a1b8018906da3bfe381c8c364e7d7d4cf1cf88184b345b3b8bedb00f670ec70ad52a0ac638eababddd10/5df86043-88ac-44b1-a2a8-523ec2172074
 
+- complete key mapping would be:
+{"multitenant": "gigwalk-multitenant-api-server", "beta": "gigwalk-beta-api-server", "stage": "gigwalk-stage-app-api-server", "jp_prod": "gigwalk-japan-api-server", "jp_stage": "gigwalk-jp-staging-api-server", "jp_partner": "gigwalk-partner-jp-api-server", "csmk_partner": "gigwalk-uu-partner", "csmk_partner_dev": "gigwalk-partner-dev-api-server", "csmk_prod": "gigwalk-uu"} 
+
 - For mobile, any new S3 images uploaded will be created in the same thumbnail bucket.
 
 
